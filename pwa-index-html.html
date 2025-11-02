@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Track your gaming backlog and progress with Q's Gaming Checklist">
+  <meta name="theme-color" content="#7c3aed">
+  
+  <!-- iOS Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="GameList">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/icon-192.png">
+  
+  <title>Q's Gaming Checklist</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      overflow-x: hidden;
+    }
+    
+    /* Install Prompt Styles */
+    .install-prompt {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 16px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 9999;
+      animation: slideUp 0.3s ease;
+    }
+    
+    .install-prompt.show {
+      display: block;
+    }
+    
+    @keyframes slideUp {
+      from {
+        transform: translateY(100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .install-prompt-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .install-prompt-icon {
+      font-size: 32px;
+    }
+    
+    .install-prompt-text h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    
+    .install-prompt-text p {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+    
+    .install-prompt-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .install-prompt-buttons button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .install-btn {
+      background: white;
+      color: #764ba2;
+    }
+    
+    .dismiss-btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+    
+    /* Loading Screen */
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      color: white;
+    }
+    
+    .loading-screen.hide {
+      animation: fadeOut 0.5s forwards;
+    }
+    
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+    
+    .loader {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .offline-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #ef4444;
+      color: white;
+      padding: 12px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      z-index: 9998;
+      transform: translateY(-100%);
+      transition: transform 0.3s;
+    }
+    
+    .offline-banner.show {
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loader"></div>
+    <h2>🎮 Gaming Checklist</h2>
+    <p>Loading your games...</p>
+  </div>
+  
+  <!-- Offline Banner -->
+  <div class="offline-banner" id="offlineBanner">
+    📡 You're offline - Changes will sync when back online
+  </div>
+  
+  <!-- Install Prompt -->
+  <div class="install-prompt" id="installPrompt">
+    <div class="install-prompt-content">
+      <div class="install-prompt-icon">🎮</div>
+      <div class="install-prompt-text">
+        <h3>Install Gaming Checklist</h3>
+        <p>Get the full app experience on your device</p>
+      </div>
+    </div>
+    <div class="install-prompt-buttons">
+      <button class="install-btn" id="installBtn">Install</button>
+      <button class="dismiss-btn" id="dismissBtn">Later</button>
+    </div>
+  </div>
+  
+  <!-- React App Root -->
+  <div id="root"></div>
+  
+  <!-- PWA Registration Script -->
+  <script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('✅ Service Worker registered:', registration.scope);
+            
+            // Check for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version available
+                  if (confirm('New version available! Reload to update?')) {
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          })
+          .catch(error => {
+            console.log('❌ Service Worker registration failed:', error);
+          });
+      });
+    }
+    
+    // Install Prompt
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // Show custom install prompt after 3 seconds
+      setTimeout(() => {
+        document.getElementById('installPrompt').classList.add('show');
+      }, 3000);
+    });
+    
+    document.getElementById('installBtn')?.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response: ${outcome}`);
+        deferredPrompt = null;
+        document.getElementById('installPrompt').classList.remove('show');
+      }
+    });
+    
+    document.getElementById('dismissBtn')?.addEventListener('click', () => {
+      document.getElementById('installPrompt').classList.remove('show');
+      localStorage.setItem('installPromptDismissed', Date.now());
+    });
+    
+    // Don't show prompt if dismissed recently (7 days)
+    const dismissed = localStorage.getItem('installPromptDismissed');
+    if (dismissed && Date.now() - dismissed < 7 * 24 * 60 * 60 * 1000) {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+      });
+    }
+    
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      console.log('✅ Running as installed PWA');
+    }
+    
+    // Online/Offline Detection
+    window.addEventListener('online', () => {
+      document.getElementById('offlineBanner').classList.remove('show');
+      console.log('🌐 Back online');
+    });
+    
+    window.addEventListener('offline', () => {
+      document.getElementById('offlineBanner').classList.add('show');
+      console.log('📡 You are offline');
+    });
+    
+    // Hide loading screen when app loads
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        document.getElementById('loadingScreen').classList.add('hide');
+      }, 1000);
+    });
+    
+    // iOS Standalone Mode Detection
+    if (('standalone' in window.navigator) && window.navigator.standalone) {
+      console.log('✅ Running as iOS web app');
+    }
+    
+    // Prevent pull-to-refresh on mobile
+    document.body.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1) return;
+      if (window.scrollY === 0) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
+  
+  <!-- Your React App Bundle (you'll need to build this) -->
+  <script src="/app.js"></script>
+</body>
+</html>
