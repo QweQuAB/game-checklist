@@ -10,13 +10,13 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="GameList">
-  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   
   <!-- PWA Manifest -->
-  <link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="manifest.json">
   
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/icon-192.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
   
   <title>Q's Gaming Checklist</title>
   
@@ -207,7 +207,7 @@
     // Register Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('service-worker.js')
           .then(registration => {
             console.log('✅ Service Worker registered:', registration.scope);
             
@@ -304,6 +304,6 @@
   </script>
   
   <!-- Your React App Bundle (you'll need to build this) -->
-  <script src="/app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
