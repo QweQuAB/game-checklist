@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Play, Check, Star, Circle, Plus, Youtube, BookOpen, ChevronDown, ChevronUp, Search, Moon, Sun, SlidersHorizontal, MessageSquare, Upload, Download as DownloadIcon, Trash2 } from 'lucide-react';
+import { Download, Play, Check, Star, Circle, Plus, Youtube, BookOpen, ChevronDown, ChevronUp, Search, Moon, Sun, SlidersHorizontal, MessageSquare, Upload, Trash2 } from 'lucide-react';
 
 const GameChecklist = () => {
   const initialGames = [
